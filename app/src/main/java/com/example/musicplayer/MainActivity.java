@@ -86,13 +86,14 @@ public class MainActivity extends AppCompatActivity {
         customAdapter customAdapter = new customAdapter();
         listView.setAdapter(customAdapter);
 
-        listView.setOnClickListener(new AdapterView.OnItemClickListener(){
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String songName = (String) listView.getItemAtPosition(position);
-                startActivity(new Intent(getApplicationContext(),playerActivity.class));
+                startActivity(new Intent(getApplicationContext(), playerActivity.class).putExtra("songs" , mySongs)
+                                .putExtra("songname" , songName).putExtra("pos", position)
+                );
             }
-
         });
     }
     class customAdapter extends BaseAdapter{
