@@ -1,5 +1,6 @@
 package com.example.musicplayer;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.animation.AnimatorSet;
@@ -9,7 +10,9 @@ import android.graphics.PorterDuff;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Animation;
@@ -38,9 +41,22 @@ public class playerActivity extends AppCompatActivity {
     ArrayList<File> mySongs;
 
     @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == android.R.id.home){
+            onBackPressed();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
+
+        getSupportActionBar().setTitle("Btech Days Player ");
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         btnPrevious = findViewById(R.id.btnPrevious);
         btnNext = findViewById(R.id.btnNext);
@@ -116,8 +132,39 @@ public class playerActivity extends AppCompatActivity {
             }
         });
 
+        String endTime = createTime(mediaPlayer.getDuration());
+        txtSongEnd.setText(endTime);
 
+        final Handler handler = new Handler();
 
+        final int delay = 1000;
+
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                String currentTime = createTime(mediaPlayer.getCurrentPosition());
+                txtSongStart.setText(currentTime);
+                handler.postDelayed(this, delay);
+            }
+        }, delay);
+
+        btnFastForward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mediaPlayer.isPlaying()){
+                    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition()+10000);
+                }
+            }
+        });
+
+        btnFastBackward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mediaPlayer.isPlaying()){
+                    mediaPlayer.seekTo(mediaPlayer.getCurrentPosition()-10000);
+                }
+            }
+        });
 
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -184,5 +231,17 @@ public class playerActivity extends AppCompatActivity {
         AnimatorSet animatorSet = new AnimatorSet();
         animatorSet.play(objectAnimator);
         animatorSet.start();
+    }
+
+    public  String createTime(int duration){
+        String time = "";
+        int  min = duration/1000/60;
+        int sec = duration/1000%60;
+        time = time + min + ":";
+        if(sec<10){
+            time+="0";
+        }
+        time+=sec;
+        return time;
     }
 }
