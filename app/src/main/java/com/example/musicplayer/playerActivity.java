@@ -2,7 +2,10 @@ package com.example.musicplayer;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Intent;
+import android.graphics.PorterDuff;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -30,7 +33,7 @@ public class playerActivity extends AppCompatActivity {
 
     public static final String EXTRA_NAME = "song_name";
     static MediaPlayer mediaPlayer;
-
+    Thread updateSeekBar;
     int position;
     ArrayList<File> mySongs;
 
@@ -70,6 +73,52 @@ public class playerActivity extends AppCompatActivity {
 
         mediaPlayer = MediaPlayer.create(getApplicationContext() ,uri);
         mediaPlayer.start();
+
+//        SeekBar
+        updateSeekBar = new Thread()
+        {
+            @Override
+            public void run() {
+                int totalDuration = mediaPlayer.getDuration();
+                int currentPosition = 0 ;
+
+                while (currentPosition < totalDuration){
+                    try {
+                        sleep(500);
+                        currentPosition = mediaPlayer.getCurrentPosition();
+                        seekMusicBar.setProgress(currentPosition);
+                    }
+                    catch (InterruptedException| IllegalStateException e){
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+        seekMusicBar.setMax(mediaPlayer.getDuration());
+        updateSeekBar.start();
+        seekMusicBar.getProgressDrawable().setColorFilter(getResources().getColor(R.color.purple_700), PorterDuff.Mode.MULTIPLY);
+        seekMusicBar.getThumb().setColorFilter(getResources().getColor(R.color.purple_700), PorterDuff.Mode.SRC_IN);
+
+        seekMusicBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mediaPlayer.seekTo(seekBar.getProgress());
+            }
+        });
+
+
+
+
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -91,6 +140,49 @@ public class playerActivity extends AppCompatActivity {
                 }
             }
         });
-        
+
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                btnNext.performClick();
+            }
+        });
+        btnNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mediaPlayer.stop();
+                mediaPlayer.release();
+                position = ((position+1)%mySongs.size());
+                Uri uri = Uri.parse(mySongs.get(position).toString());
+                mediaPlayer = mediaPlayer.create(getApplicationContext() , uri);
+                songName = mySongs.get(position).getName();
+                txtSongName.setText(songName);
+                mediaPlayer.start();
+
+                startAnimation(imageView, 360f);
+            }
+        });
+
+        btnPrevious.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mediaPlayer.stop();
+                mediaPlayer.release();
+                position = ((position-1)<0)?(mySongs.size()-1):position-1;
+                Uri uri = Uri.parse(mySongs.get(position).toString());
+                mediaPlayer = mediaPlayer.create(getApplicationContext() , uri);
+                songName = mySongs.get(position).getName();
+                txtSongName.setText(songName);
+                mediaPlayer.start();
+                startAnimation(imageView,-360f);
+            }
+        });
+    }
+    public void startAnimation(View view, Float degree){
+        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(imageView, "rotation" , 0f , degree);
+        objectAnimator.setDuration(1000);
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.play(objectAnimator);
+        animatorSet.start();
     }
 }
